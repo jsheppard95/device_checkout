@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Test Report</title>
+    <link href="assets/style.css" rel="stylesheet" type="text/css"/></head>
+  <body onLoad="init()">
+    <script>/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+
+function toArray(iter) {
+    if (iter === null) {
+        return null;
+    }
+    return Array.prototype.slice.call(iter);
+}
+
+function find(selector, elem) {
+    if (!elem) {
+        elem = document;
+    }
+    return elem.querySelector(selector);
+}
+
+function find_all(selector, elem) {
+    if (!elem) {
+        elem = document;
+    }
+    return toArray(elem.querySelectorAll(selector));
+}
+
+function sort_column(elem) {
+    toggle_sort_states(elem);
+    var colIndex = toArray(elem.parentNode.childNodes).indexOf(elem);
+    var key;
+    if (elem.classList.contains('numeric')) {
+        key = key_num;
+    } else if (elem.classList.contains('result')) {
+        key = key_result;
+    } else {
+        key = key_alpha;
+    }
+    sort_table(elem, key(colIndex));
+}
+
+function show_all_extras() {
+    find_all('.col-result').forEach(show_extras);
+}
+
+function hide_all_extras() {
+    find_all('.col-result').forEach(hide_extras);
+}
+
+function show_extras(colresult_elem) {
+    var extras = colresult_elem.parentNode.nextElementSibling;
+    var expandcollapse = colresult_elem.firstElementChild;
+    extras.classList.remove("collapsed");
+    expandcollapse.classList.remove("expander");
+    expandcollapse.classList.add("collapser");
+}
+
+function hide_extras(colresult_elem) {
+    var extras = colresult_elem.parentNode.nextElementSibling;
+    var expandcollapse = colresult_elem.firstElementChild;
+    extras.classList.add("collapsed");
+    expandcollapse.classList.remove("collapser");
+    expandcollapse.classList.add("expander");
+}
+
+function show_filters() {
+    var filter_items = document.getElementsByClassName('filter');
+    for (var i = 0; i < filter_items.length; i++)
+        filter_items[i].hidden = false;
+}
+
+function add_collapse() {
+    // Add links for show/hide all
+    var resulttable = find('table#results-table');
+    var showhideall = document.createElement("p");
+    showhideall.innerHTML = '<a href="javascript:show_all_extras()">Show all details</a> / ' +
+                            '<a href="javascript:hide_all_extras()">Hide all details</a>';
+    resulttable.parentElement.insertBefore(showhideall, resulttable);
+
+    // Add show/hide link to each result
+    find_all('.col-result').forEach(function(elem) {
+        var collapsed = get_query_parameter('collapsed') || 'Passed';
+        var extras = elem.parentNode.nextElementSibling;
+        var expandcollapse = document.createElement("span");
+        if (collapsed.includes(elem.innerHTML)) {
+            extras.classList.add("collapsed");
+            expandcollapse.classList.add("expander");
+        } else {
+            expandcollapse.classList.add("collapser");
+        }
+        elem.appendChild(expandcollapse);
+
+        elem.addEventListener("click", function(event) {
+            if (event.currentTarget.parentNode.nextElementSibling.classList.contains("collapsed")) {
+                show_extras(event.currentTarget);
+            } else {
+                hide_extras(event.currentTarget);
+            }
+        });
+    })
+}
+
+function get_query_parameter(name) {
+    var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
+
+function init () {
+    reset_sort_headers();
+
+    add_collapse();
+
+    show_filters();
+
+    toggle_sort_states(find('.initial-sort'));
+
+    find_all('.sortable').forEach(function(elem) {
+        elem.addEventListener("click",
+                              function(event) {
+                                  sort_column(elem);
+                              }, false)
+    });
+
+};
+
+function sort_table(clicked, key_func) {
+    var rows = find_all('.results-table-row');
+    var reversed = !clicked.classList.contains('asc');
+    var sorted_rows = sort(rows, key_func, reversed);
+    /* Whole table is removed here because browsers acts much slower
+     * when appending existing elements.
+     */
+    var thead = document.getElementById("results-table-head");
+    document.getElementById('results-table').remove();
+    var parent = document.createElement("table");
+    parent.id = "results-table";
+    parent.appendChild(thead);
+    sorted_rows.forEach(function(elem) {
+        parent.appendChild(elem);
+    });
+    document.getElementsByTagName("BODY")[0].appendChild(parent);
+}
+
+function sort(items, key_func, reversed) {
+    var sort_array = items.map(function(item, i) {
+        return [key_func(item), i];
+    });
+    var multiplier = reversed ? -1 : 1;
+
+    sort_array.sort(function(a, b) {
+        var key_a = a[0];
+        var key_b = b[0];
+        return multiplier * (key_a >= key_b ? 1 : -1);
+    });
+
+    return sort_array.map(function(item) {
+        var index = item[1];
+        return items[index];
+    });
+}
+
+function key_alpha(col_index) {
+    return function(elem) {
+        return elem.childNodes[1].childNodes[col_index].firstChild.data.toLowerCase();
+    };
+}
+
+function key_num(col_index) {
+    return function(elem) {
+        return parseFloat(elem.childNodes[1].childNodes[col_index].firstChild.data);
+    };
+}
+
+function key_result(col_index) {
+    return function(elem) {
+        var strings = ['Error', 'Failed', 'Rerun', 'XFailed', 'XPassed',
+                       'Skipped', 'Passed'];
+        return strings.indexOf(elem.childNodes[1].childNodes[col_index].firstChild.data);
+    };
+}
+
+function reset_sort_headers() {
+    find_all('.sort-icon').forEach(function(elem) {
+        elem.parentNode.removeChild(elem);
+    });
+    find_all('.sortable').forEach(function(elem) {
+        var icon = document.createElement("div");
+        icon.className = "sort-icon";
+        icon.textContent = "vvv";
+        elem.insertBefore(icon, elem.firstChild);
+        elem.classList.remove("desc", "active");
+        elem.classList.add("asc", "inactive");
+    });
+}
+
+function toggle_sort_states(elem) {
+    //if active, toggle between asc and desc
+    if (elem.classList.contains('active')) {
+        elem.classList.toggle('asc');
+        elem.classList.toggle('desc');
+    }
+
+    //if inactive, reset all other functions and add ascending active
+    if (elem.classList.contains('inactive')) {
+        reset_sort_headers();
+        elem.classList.remove('inactive');
+        elem.classList.add('active');
+    }
+}
+
+function is_all_rows_hidden(value) {
+  return value.hidden == false;
+}
+
+function filter_table(elem) {
+    var outcome_att = "data-test-result";
+    var outcome = elem.getAttribute(outcome_att);
+    class_outcome = outcome + " results-table-row";
+    var outcome_rows = document.getElementsByClassName(class_outcome);
+
+    for(var i = 0; i < outcome_rows.length; i++){
+        outcome_rows[i].hidden = !elem.checked;
+    }
+
+    var rows = find_all('.results-table-row').filter(is_all_rows_hidden);
+    var all_rows_hidden = rows.length == 0 ? true : false;
+    var not_found_message = document.getElementById("not-found-message");
+    not_found_message.hidden = !all_rows_hidden;
+}
+</script>
+    <h1>report.html</h1>
+    <p>Report generated on 13-May-2019 at 13:14:16 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a> v1.20.0</p>
+    <h2>Environment</h2>
+    <table id="environment">
+      <tr>
+        <td>Packages</td>
+        <td>{&apos;pytest&apos;: &apos;3.10.1&apos;, &apos;py&apos;: &apos;1.8.0&apos;, &apos;pluggy&apos;: &apos;0.9.0&apos;}</td></tr>
+      <tr>
+        <td>Platform</td>
+        <td>Linux-2.6.32-696.6.3.el6.x86_64-x86_64-with-redhat-6.9-Santiago</td></tr>
+      <tr>
+        <td>Plugins</td>
+        <td>{&apos;metadata&apos;: &apos;1.8.0&apos;, &apos;html&apos;: &apos;1.20.0&apos;, &apos;timeout&apos;: &apos;1.3.3&apos;, &apos;qt&apos;: &apos;3.2.2&apos;}</td></tr>
+      <tr>
+        <td>Python</td>
+        <td>3.6.8</td></tr></table>
+    <h2>Summary</h2>
+    <p>3 tests ran in 19.36 seconds. </p>
+    <p class="filter" hidden="true">(Un)check the boxes to filter the results.</p><input checked="true" class="filter" data-test-result="passed" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="passed">2 passed</span>, <input checked="true" class="filter" data-test-result="skipped" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="skipped">0 skipped</span>, <input checked="true" class="filter" data-test-result="failed" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="failed">1 failed</span>, <input checked="true" class="filter" data-test-result="error" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="error">0 errors</span>, <input checked="true" class="filter" data-test-result="xfailed" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="xfailed">0 expected failures</span>, <input checked="true" class="filter" data-test-result="xpassed" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="xpassed">0 unexpected passes</span>
+    <h2>Results</h2>
+    <table id="results-table">
+      <thead id="results-table-head">
+        <tr>
+          <th class="sortable result initial-sort" col="result">Result</th>
+          <th class="sortable" col="name">Test</th>
+          <th class="sortable numeric" col="duration">Duration</th>
+          <th>Links</th></tr>
+        <tr hidden="true" id="not-found-message">
+          <th colspan="4">No results found. Try to check the filters</th></tr></thead>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/test_standard_axis.py::test_low_limit_switch_activation</td>
+          <td class="col-duration">0.01</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">motor = EpicsMotor(prefix=&#x27;XCS:USR:MMS:17&#x27;, name=&#x27;xcs_usr_mms_17&#x27;, settle_time=0.0, timeout=None, read_attrs=[&#x27;user_readback&#x27;, &#x27;user_setpoint&#x27;], configuration_attrs=[&#x27;user_offset&#x27;, &#x27;user_offset_dir&#x27;, &#x27;velocity&#x27;, &#x27;acceleration&#x27;, &#x27;motor_egu&#x27;])<br/>activate_lls = None<br/><br/>    def test_low_limit_switch_activation(motor, activate_lls):<br/>        m = motor<br/>&gt;       assert m.low_limit_switch.get() == 1<br/><span class="error">E       AssertionError: assert 0 == 1</span><br/><span class="error">E        +  where 0 = &lt;bound method EpicsSignalBase.get of EpicsSignal(read_pv=&#x27;XCS:USR:MMS:17.LLS&#x27;, name=&#x27;xcs_usr_mms_17_low_limit_switch&#x27;,...3.598891, pv_kw={}, auto_monitor=False, string=False, write_pv=&#x27;XCS:USR:MMS:17.LLS&#x27;, limits=False, put_complete=False)&gt;()</span><br/><span class="error">E        +    where &lt;bound method EpicsSignalBase.get of EpicsSignal(read_pv=&#x27;XCS:USR:MMS:17.LLS&#x27;, name=&#x27;xcs_usr_mms_17_low_limit_switch&#x27;,...3.598891, pv_kw={}, auto_monitor=False, string=False, write_pv=&#x27;XCS:USR:MMS:17.LLS&#x27;, limits=False, put_complete=False)&gt; = EpicsSignal(read_pv=&#x27;XCS:USR:MMS:17.LLS&#x27;, name=&#x27;xcs_usr_mms_17_low_limit_switch&#x27;, parent=&#x27;xcs_usr_mms_17&#x27;, value=0, ti...53.598891, pv_kw={}, auto_monitor=False, string=False, write_pv=&#x27;XCS:USR:MMS:17.LLS&#x27;, limits=False, put_complete=False).get</span><br/><span class="error">E        +      where EpicsSignal(read_pv=&#x27;XCS:USR:MMS:17.LLS&#x27;, name=&#x27;xcs_usr_mms_17_low_limit_switch&#x27;, parent=&#x27;xcs_usr_mms_17&#x27;, value=0, ti...53.598891, pv_kw={}, auto_monitor=False, string=False, write_pv=&#x27;XCS:USR:MMS:17.LLS&#x27;, limits=False, put_complete=False) = EpicsMotor(prefix=&#x27;XCS:USR:MMS:17&#x27;, name=&#x27;xcs_usr_mms_17&#x27;, settle_time=0.0, timeout=None, read_attrs=[&#x27;user_readback&#x27;, &#x27;user_setpoint&#x27;], configuration_attrs=[&#x27;user_offset&#x27;, &#x27;user_offset_dir&#x27;, &#x27;velocity&#x27;, &#x27;acceleration&#x27;, &#x27;motor_egu&#x27;]).low_limit_switch</span><br/><br/>tests/test_standard_axis.py:95: AssertionError<br/>------------------------------ Captured log setup ------------------------------<br/>epics_motor.py             233 DEBUG    [ts=2019-05-13 13:14:10.21933] EpicsMotor(prefix=&#x27;XCS:USR:MMS:17&#x27;, name=&#x27;xcs_usr_mms_17&#x27;, settle_time=0.0, timeout=None, read_attrs=[&#x27;user_readback&#x27;, &#x27;user_setpoint&#x27;], configuration_attrs=[&#x27;user_offset&#x27;, &#x27;user_offset_dir&#x27;, &#x27;velocity&#x27;, &#x27;acceleration&#x27;, &#x27;motor_egu&#x27;]) moving: False (value=1)</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/test_standard_axis.py::test_basic_motion</td>
+          <td class="col-duration">6.04</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">------------------------------ Captured log call -------------------------------<br/>epics_motor.py             233 DEBUG    [ts=2019-05-13 13:12:59.29032] EpicsMotor(prefix=&#x27;XCS:USR:MMS:17&#x27;, name=&#x27;xcs_usr_mms_17&#x27;, settle_time=0.0, timeout=None, read_attrs=[&#x27;user_readback&#x27;, &#x27;user_setpoint&#x27;], configuration_attrs=[&#x27;user_offset&#x27;, &#x27;user_offset_dir&#x27;, &#x27;velocity&#x27;, &#x27;acceleration&#x27;, &#x27;motor_egu&#x27;]) moving: False (value=1)
+epics_motor.py             233 DEBUG    [ts=2019-05-13 13:12:59.29032] EpicsMotor(prefix=&#x27;XCS:USR:MMS:17&#x27;, name=&#x27;xcs_usr_mms_17&#x27;, settle_time=0.0, timeout=None, read_attrs=[&#x27;user_readback&#x27;, &#x27;user_setpoint&#x27;], configuration_attrs=[&#x27;user_offset&#x27;, &#x27;user_offset_dir&#x27;, &#x27;velocity&#x27;, &#x27;acceleration&#x27;, &#x27;motor_egu&#x27;]) moving: True (value=0)
+epics_motor.py             233 DEBUG    [ts=2019-05-13 13:14:01.83500] EpicsMotor(prefix=&#x27;XCS:USR:MMS:17&#x27;, name=&#x27;xcs_usr_mms_17&#x27;, settle_time=0.0, timeout=None, read_attrs=[&#x27;user_readback&#x27;, &#x27;user_setpoint&#x27;], configuration_attrs=[&#x27;user_offset&#x27;, &#x27;user_offset_dir&#x27;, &#x27;velocity&#x27;, &#x27;acceleration&#x27;, &#x27;motor_egu&#x27;]) moving: False (value=1)
+ophydobj.py                273 ERROR    Subscription value callback exception (EpicsSignalRO(read_pv=&#x27;XCS:USR:MMS:17.DMOV&#x27;, name=&#x27;xcs_usr_mms_17_motor_done_move&#x27;, parent=&#x27;xcs_usr_mms_17&#x27;, value=1, timestamp=1557778441.834996, pv_kw={}, auto_monitor=False, string=False))
+Traceback (most recent call last):
+  File &quot;/reg/g/pcds/pyps/conda/py36/envs/pcds-2.1.0/lib/python3.6/site-packages/ophyd/ophydobj.py&quot;, line 268, in inner
+    cb(*args, **kwargs)
+  File &quot;/reg/g/pcds/pyps/conda/py36/envs/pcds-2.1.0/lib/python3.6/site-packages/ophyd/epics_motor.py&quot;, line 242, in _move_changed
+    if self.direction_of_travel.get() == 0:
+  File &quot;/reg/g/pcds/pyps/conda/py36/envs/pcds-2.1.0/lib/python3.6/site-packages/ophyd/signal.py&quot;, line 554, in get
+    self._read_pv.pvname)
+TimeoutError: Failed to connect to XCS:USR:MMS:17.TDIR
+epics_motor.py             233 DEBUG    [ts=2019-05-13 13:14:01.83500] EpicsMotor(prefix=&#x27;XCS:USR:MMS:17&#x27;, name=&#x27;xcs_usr_mms_17&#x27;, settle_time=0.0, timeout=None, read_attrs=[&#x27;user_readback&#x27;, &#x27;user_setpoint&#x27;], configuration_attrs=[&#x27;user_offset&#x27;, &#x27;user_offset_dir&#x27;, &#x27;velocity&#x27;, &#x27;acceleration&#x27;, &#x27;motor_egu&#x27;]) moving: False (value=1)
+epics_motor.py             233 DEBUG    [ts=2019-05-13 13:14:02.37109] EpicsMotor(prefix=&#x27;XCS:USR:MMS:17&#x27;, name=&#x27;xcs_usr_mms_17&#x27;, settle_time=0.0, timeout=None, read_attrs=[&#x27;user_readback&#x27;, &#x27;user_setpoint&#x27;], configuration_attrs=[&#x27;user_offset&#x27;, &#x27;user_offset_dir&#x27;, &#x27;velocity&#x27;, &#x27;acceleration&#x27;, &#x27;motor_egu&#x27;]) moving: True (value=0)
+epics_motor.py             233 DEBUG    [ts=2019-05-13 13:14:04.83071] EpicsMotor(prefix=&#x27;XCS:USR:MMS:17&#x27;, name=&#x27;xcs_usr_mms_17&#x27;, settle_time=0.0, timeout=None, read_attrs=[&#x27;user_readback&#x27;, &#x27;user_setpoint&#x27;], configuration_attrs=[&#x27;user_offset&#x27;, &#x27;user_offset_dir&#x27;, &#x27;velocity&#x27;, &#x27;acceleration&#x27;, &#x27;motor_egu&#x27;]) moving: False (value=1)</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/test_standard_axis.py::test_high_limit_switch_activation</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">------------------------------ Captured log setup ------------------------------<br/>epics_motor.py             233 DEBUG    [ts=2019-05-13 13:14:05.51015] EpicsMotor(prefix=&#x27;XCS:USR:MMS:17&#x27;, name=&#x27;xcs_usr_mms_17&#x27;, settle_time=0.0, timeout=None, read_attrs=[&#x27;user_readback&#x27;, &#x27;user_setpoint&#x27;], configuration_attrs=[&#x27;user_offset&#x27;, &#x27;user_offset_dir&#x27;, &#x27;velocity&#x27;, &#x27;acceleration&#x27;, &#x27;motor_egu&#x27;]) moving: False (value=1)
+ophydobj.py                273 ERROR    Subscription value callback exception (EpicsSignalRO(read_pv=&#x27;XCS:USR:MMS:17.DMOV&#x27;, name=&#x27;xcs_usr_mms_17_motor_done_move&#x27;, parent=&#x27;xcs_usr_mms_17&#x27;, value=1, timestamp=1557778444.83071, pv_kw={}, auto_monitor=False, string=False))
+Traceback (most recent call last):
+  File &quot;/reg/g/pcds/pyps/conda/py36/envs/pcds-2.1.0/lib/python3.6/site-packages/ophyd/ophydobj.py&quot;, line 268, in inner
+    cb(*args, **kwargs)
+  File &quot;/reg/g/pcds/pyps/conda/py36/envs/pcds-2.1.0/lib/python3.6/site-packages/ophyd/epics_motor.py&quot;, line 242, in _move_changed
+    if self.direction_of_travel.get() == 0:
+  File &quot;/reg/g/pcds/pyps/conda/py36/envs/pcds-2.1.0/lib/python3.6/site-packages/ophyd/signal.py&quot;, line 554, in get
+    self._read_pv.pvname)
+TimeoutError: Failed to connect to XCS:USR:MMS:17.TDIR
+epics_motor.py             233 DEBUG    [ts=2019-05-13 13:14:04.83071] EpicsMotor(prefix=&#x27;XCS:USR:MMS:17&#x27;, name=&#x27;xcs_usr_mms_17&#x27;, settle_time=0.0, timeout=None, read_attrs=[&#x27;user_readback&#x27;, &#x27;user_setpoint&#x27;], configuration_attrs=[&#x27;user_offset&#x27;, &#x27;user_offset_dir&#x27;, &#x27;velocity&#x27;, &#x27;acceleration&#x27;, &#x27;motor_egu&#x27;]) moving: False (value=1)
+epics_motor.py             233 DEBUG    [ts=2019-05-13 13:14:05.36472] EpicsMotor(prefix=&#x27;XCS:USR:MMS:17&#x27;, name=&#x27;xcs_usr_mms_17&#x27;, settle_time=0.0, timeout=None, read_attrs=[&#x27;user_readback&#x27;, &#x27;user_setpoint&#x27;], configuration_attrs=[&#x27;user_offset&#x27;, &#x27;user_offset_dir&#x27;, &#x27;velocity&#x27;, &#x27;acceleration&#x27;, &#x27;motor_egu&#x27;]) moving: False (value=1)</div></td></tr></tbody></table></body></html>

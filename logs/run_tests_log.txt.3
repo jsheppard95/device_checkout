@@ -1,0 +1,37 @@
+13:06:14.848 run_tests     INFO     MainThread pytest arguments: ['-v', '-vrxs', '--html=report.html']
+13:06:16.810 _pyepics_shim DEBUG    MainThread Installing monitor dispatcher
+13:06:18.659 selector_events DEBUG    MainThread Using selector: EpollSelector
+13:06:18.672 pseudopos     DEBUG    MainThread Real positioners: [SoftPositioner(name='pseudo3x3_real1', parent='pseudo3x3', settle_time=0.0, timeout=None, egu='', limits=(0, 0), source='computed'), SoftPositioner(name='pseudo3x3_real2', parent='pseudo3x3', settle_time=0.0, timeout=None, egu='', limits=(0, 0), source='computed'), SoftPositioner(name='pseudo3x3_real3', parent='pseudo3x3', settle_time=0.0, timeout=None, egu='', limits=(0, 0), source='computed')]
+13:06:18.673 pseudopos     DEBUG    MainThread Pseudo positioners: [PseudoSingle(prefix='', name='pseudo3x3_pseudo1', parent='pseudo3x3', settle_time=0.0, timeout=None, egu='a', limits=(-10, 10), source='computed', read_attrs=['readback', 'setpoint'], configuration_attrs=[], idx=None), PseudoSingle(prefix='', name='pseudo3x3_pseudo2', parent='pseudo3x3', settle_time=0.0, timeout=None, egu='b', limits=(-10, 10), source='computed', read_attrs=['readback', 'setpoint'], configuration_attrs=[], idx=None), PseudoSingle(prefix='', name='pseudo3x3_pseudo3', parent='pseudo3x3', settle_time=0.0, timeout=None, egu='c', limits=(0, 0), source='computed', read_attrs=['readback', 'setpoint'], configuration_attrs=[], idx=None)]
+13:06:18.675 pseudopos     DEBUG    MainThread Real positioners: [SoftPositioner(name='pseudo1x3_real1', parent='pseudo1x3', settle_time=0.0, timeout=None, egu='', limits=(0, 0), source='computed'), SoftPositioner(name='pseudo1x3_real2', parent='pseudo1x3', settle_time=0.0, timeout=None, egu='', limits=(0, 0), source='computed'), SoftPositioner(name='pseudo1x3_real3', parent='pseudo1x3', settle_time=0.0, timeout=None, egu='', limits=(0, 0), source='computed')]
+13:06:18.675 pseudopos     DEBUG    MainThread Pseudo positioners: [PseudoSingle(prefix='', name='pseudo1x3_pseudo1', parent='pseudo1x3', settle_time=0.0, timeout=None, egu='', limits=(-10, 10), source='computed', read_attrs=['readback', 'setpoint'], configuration_attrs=[], idx=None)]
+13:06:18.729 epics_motor   DEBUG    monitor_dispatcher [ts=2019-05-13 13:01:27.10587] EpicsMotor(prefix='XCS:USR:MMS:17', name='xcs_usr_mms_17', settle_time=0.0, timeout=None, read_attrs=['user_readback', 'user_setpoint'], configuration_attrs=['user_offset', 'user_offset_dir', 'velocity', 'acceleration', 'motor_egu']) moving: False (value=1)
+13:06:18.733 epics_motor   DEBUG    monitor_dispatcher [ts=2019-05-13 13:01:27.10587] EpicsMotor(prefix='XCS:USR:MMS:17', name='xcs_usr_mms_17', settle_time=0.0, timeout=None, read_attrs=['user_readback', 'user_setpoint'], configuration_attrs=['user_offset', 'user_offset_dir', 'velocity', 'acceleration', 'motor_egu']) moving: True (value=0)
+13:06:21.121 epics_motor   DEBUG    monitor_dispatcher [ts=2019-05-13 13:06:21.12336] EpicsMotor(prefix='XCS:USR:MMS:17', name='xcs_usr_mms_17', settle_time=0.0, timeout=None, read_attrs=['user_readback', 'user_setpoint'], configuration_attrs=['user_offset', 'user_offset_dir', 'velocity', 'acceleration', 'motor_egu']) moving: False (value=1)
+13:06:23.123 ophydobj      ERROR    monitor_dispatcher Subscription value callback exception (EpicsSignalRO(read_pv='XCS:USR:MMS:17.DMOV', name='xcs_usr_mms_17_motor_done_move', parent='xcs_usr_mms_17', value=1, timestamp=1557777981.123362, pv_kw={}, auto_monitor=False, string=False))
+Traceback (most recent call last):
+  File "/reg/g/pcds/pyps/conda/py36/envs/pcds-2.1.0/lib/python3.6/site-packages/ophyd/ophydobj.py", line 268, in inner
+    cb(*args, **kwargs)
+  File "/reg/g/pcds/pyps/conda/py36/envs/pcds-2.1.0/lib/python3.6/site-packages/ophyd/epics_motor.py", line 242, in _move_changed
+    if self.direction_of_travel.get() == 0:
+  File "/reg/g/pcds/pyps/conda/py36/envs/pcds-2.1.0/lib/python3.6/site-packages/ophyd/signal.py", line 554, in get
+    self._read_pv.pvname)
+TimeoutError: Failed to connect to XCS:USR:MMS:17.TDIR
+13:06:23.128 epics_motor   DEBUG    monitor_dispatcher [ts=2019-05-13 13:06:21.12336] EpicsMotor(prefix='XCS:USR:MMS:17', name='xcs_usr_mms_17', settle_time=0.0, timeout=None, read_attrs=['user_readback', 'user_setpoint'], configuration_attrs=['user_offset', 'user_offset_dir', 'velocity', 'acceleration', 'motor_egu']) moving: False (value=1)
+13:06:23.129 epics_motor   DEBUG    monitor_dispatcher [ts=2019-05-13 13:06:21.66542] EpicsMotor(prefix='XCS:USR:MMS:17', name='xcs_usr_mms_17', settle_time=0.0, timeout=None, read_attrs=['user_readback', 'user_setpoint'], configuration_attrs=['user_offset', 'user_offset_dir', 'velocity', 'acceleration', 'motor_egu']) moving: True (value=0)
+13:06:24.125 epics_motor   DEBUG    monitor_dispatcher [ts=2019-05-13 13:06:24.12714] EpicsMotor(prefix='XCS:USR:MMS:17', name='xcs_usr_mms_17', settle_time=0.0, timeout=None, read_attrs=['user_readback', 'user_setpoint'], configuration_attrs=['user_offset', 'user_offset_dir', 'velocity', 'acceleration', 'motor_egu']) moving: False (value=1)
+13:06:24.768 epics_motor   DEBUG    MainThread [ts=2019-05-13 13:06:24.76800] EpicsMotor(prefix='XCS:USR:MMS:17', name='xcs_usr_mms_17', settle_time=0.0, timeout=None, read_attrs=['user_readback', 'user_setpoint'], configuration_attrs=['user_offset', 'user_offset_dir', 'velocity', 'acceleration', 'motor_egu']) moving: False (value=1)
+13:06:25.127 ophydobj      ERROR    monitor_dispatcher Subscription value callback exception (EpicsSignalRO(read_pv='XCS:USR:MMS:17.DMOV', name='xcs_usr_mms_17_motor_done_move', parent='xcs_usr_mms_17', value=1, timestamp=1557777984.127139, pv_kw={}, auto_monitor=False, string=False))
+Traceback (most recent call last):
+  File "/reg/g/pcds/pyps/conda/py36/envs/pcds-2.1.0/lib/python3.6/site-packages/ophyd/ophydobj.py", line 268, in inner
+    cb(*args, **kwargs)
+  File "/reg/g/pcds/pyps/conda/py36/envs/pcds-2.1.0/lib/python3.6/site-packages/ophyd/epics_motor.py", line 242, in _move_changed
+    if self.direction_of_travel.get() == 0:
+  File "/reg/g/pcds/pyps/conda/py36/envs/pcds-2.1.0/lib/python3.6/site-packages/ophyd/signal.py", line 554, in get
+    self._read_pv.pvname)
+TimeoutError: Failed to connect to XCS:USR:MMS:17.TDIR
+13:06:25.127 epics_motor   DEBUG    monitor_dispatcher [ts=2019-05-13 13:06:24.12714] EpicsMotor(prefix='XCS:USR:MMS:17', name='xcs_usr_mms_17', settle_time=0.0, timeout=None, read_attrs=['user_readback', 'user_setpoint'], configuration_attrs=['user_offset', 'user_offset_dir', 'velocity', 'acceleration', 'motor_egu']) moving: False (value=1)
+13:06:25.129 epics_motor   DEBUG    monitor_dispatcher [ts=2019-05-13 13:06:24.65712] EpicsMotor(prefix='XCS:USR:MMS:17', name='xcs_usr_mms_17', settle_time=0.0, timeout=None, read_attrs=['user_readback', 'user_setpoint'], configuration_attrs=['user_offset', 'user_offset_dir', 'velocity', 'acceleration', 'motor_egu']) moving: False (value=1)
+13:06:31.162 _pyepics_shim DEBUG    MainThread Performing ophyd cleanup
+13:06:31.162 _pyepics_shim DEBUG    MainThread Joining the dispatcher thread
+13:06:31.238 _pyepics_shim DEBUG    MainThread Finalizing libca
