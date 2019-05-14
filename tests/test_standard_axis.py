@@ -2,7 +2,7 @@ import logging
 import pytest
 import time
 
-from pcdsdevices.epics_motor import EpicsMotor
+from pcdsdevices.epics_motor import IMS
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ def activate_lls(pytestconfig):
 
 @pytest.fixture(scope='function')
 def motor():
-    m = EpicsMotor('XCS:USR:MMS:17', name='xcs_usr_mms_17')
+    m = IMS('XCS:USR:MMS:17', name='xcs_usr_mms_17')
     return m
 
 
@@ -62,10 +62,6 @@ def motor():
 #def test_that_fails(disconnect_component):
 #    assert False
 
-
-# Current issue:
-# Using EpicsMotor can read/write to each of the components but cannot use
-# basic functions available in xcspython
 
 def test_basic_motion(motor):
     m = motor
@@ -95,7 +91,24 @@ def test_low_limit_switch_activation(motor, activate_lls):
     assert m.low_limit_switch.get() == 1
 
 
-def test_full_range_of_motion(motor):
+def test_soft_limits(motor):
     # Move motor between high and low limit switches - make sure meets
     # motion range requirements
-    pass
+    m = motor
+    limits = m.limits  # tuple: (low_lim, high_lim)
+    # NOTE: Above are soft limits - might not be set up correctly
+    # Move to low limit
+    m.mv(limits[0])
+    time.sleep(5.0)
+    assert m.user_readback.get() == limits[0]
+    # Move to high limit
+    m.mv(limits[1])
+    time.sleep(5.0)
+    assert m.user_readback.get() == limits[1]
+    # NOTE: not quite the right approach, really want to jog motor until the
+    # limit switch is activated, then check the position and ensure the full
+    # range is accurate
+
+
+def test_full_motion_range(motor):
+    m = motor
