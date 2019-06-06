@@ -9,7 +9,7 @@ import pytest
 if __name__ == '__main__':
     # Show output results from every test function
     # Show the message output for skipped and expected failures
-    args = ['-v', '-vrxs', '--html=report.html']
+    args = ['-v', '-vrxs', '--html=motor-checkout.html', '--css=big_font.css', '--self-contained-html']
 
     # Add extra arguments
     if len(sys.argv) > 1:
